@@ -2,12 +2,12 @@ from .bvm import BrainfuckVM
 from .ops import (
     BrainfuckOp,
     BrainfuckOpAdd,
-    BrainfuckOpSub,
-    BrainfuckOpLeft,
-    BrainfuckOpRight,
+    BrainfuckOpBreakpoint,
     BrainfuckOpIn,
-    BrainfuckOpOut,
+    BrainfuckOpLeft,
     BrainfuckOpLoopBegin,
     BrainfuckOpLoopEnd,
-    BrainfuckOpBreakpoint,
+    BrainfuckOpOut,
+    BrainfuckOpRight,
+    BrainfuckOpSub,
 )

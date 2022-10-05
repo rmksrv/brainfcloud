@@ -29,7 +29,9 @@ class BrainfuckVM:
 
     def __init__(self, memory_size: int = DEFAULT_MEMORY_SIZE):
         if not is_memory_size_valid(memory_size):
-            raise ValueError(f"BrainfuckVM cannot be initialized with memory_size={memory_size}")
+            raise ValueError(
+                f"BrainfuckVM cannot be initialized with memory_size={memory_size}"
+            )
         self.memory_size = memory_size
         self.memory = np.zeros(memory_size, np.uint8)
         self.memory_ptr = 0
@@ -50,7 +52,11 @@ class BrainfuckVM:
 
     @property
     def curr_memory_range(self) -> npt.NDArray[np.uint8]:
-        return self.memory[max(self.memory_ptr - 4, 0):min(self.memory_ptr + 5, self.memory_size)]
+        return self.memory[
+            max(self.memory_ptr - 4, 0) : min(
+                self.memory_ptr + 5, self.memory_size
+            )
+        ]
 
     @property
     def curr_op(self) -> str:
@@ -63,7 +69,7 @@ class BrainfuckVM:
         """temp for debug"""
         if not self.code:
             return ""
-        return self.code[self.code_ptr - 4:self.code_ptr + 5]
+        return self.code[self.code_ptr - 4 : self.code_ptr + 5]
 
     def minified_code(self, source: str) -> str:
         return "".join(s for s in source if s in self._ops.keys())

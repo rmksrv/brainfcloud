@@ -4,9 +4,7 @@ import bvm
 
 
 class BrainfuckOp(abc.ABC):
-    def __init__(
-            self, vm: bvm.BrainfuckVM, countable: bool = True
-    ):
+    def __init__(self, vm: bvm.BrainfuckVM, countable: bool = True):
         self.vm = vm
         self.countable = countable
 
@@ -57,9 +55,7 @@ class BrainfuckOpRight(BrainfuckOp):
 
 class BrainfuckOpOut(BrainfuckOp):
     def eval(self) -> None:
-        self.vm.stdout.put(
-            chr(self.vm.memory[self.vm.memory_ptr])
-        )
+        self.vm.stdout.put(chr(self.vm.memory[self.vm.memory_ptr]))
 
     def __repr__(self):
         return "."
@@ -82,8 +78,10 @@ class BrainfuckOpLoopBegin(BrainfuckOp):
         while nesting_level > 0:
             self.vm.code_ptr += 1
             match self.vm.code[self.vm.code_ptr]:
-                case "[": nesting_level += 1
-                case "]": nesting_level -= 1
+                case "[":
+                    nesting_level += 1
+                case "]":
+                    nesting_level -= 1
 
     def eval(self) -> None:
         if self.vm.curr_memory == 0:
