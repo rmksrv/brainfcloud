@@ -41,9 +41,13 @@ def test_hello_world_optimized(vm: bvm.BrainfuckVM):
     assert vm.stdout_as_str() == "Hello World!\n"
 
 
-# @pytest.mark.skip("broken")
-def test_bubble_sort(vm: bvm.BrainfuckVM):
-    # FIXME: issues at 2051 iteration (no loop break)
+@pytest.mark.parametrize(["inp", "expected_out"], [
+    ["41", "14"],
+    ["413", "134"],
+    ["1398", "1389"],
+    ["3985", "3589"],
+])
+def test_bubble_sort(vm: bvm.BrainfuckVM, inp: str, expected_out: str):
     src = """
     [bsort.b -- bubble sort
     (c) 2016 Daniel B. Cristofani
@@ -53,32 +57,32 @@ def test_bubble_sort(vm: bvm.BrainfuckVM):
     [<<]>>>>[
     <<[>+<<+>-]
     >>[>+<<<<[->]>[<]>>-]
-    <<<
-    
-    [  ; начало проблемного цикла
-        [-]>>[>+<-]>>
-        [   ; цикл член 
-            <<<+>>>-
-        ]
-    ]  ;а это говно возвращает на начало цикл член!!!
-    
-    >>[[<+>-]>>]<
-    ]<<[>>+<<-]<<
-    ]>>>>[.>>]
-    
-    [This program sorts the bytes of its input by bubble sort.]
-    """
-    src = """
-    >>,[>>,]<<[
-    [<<]>>>>[
-    <<[>+<<+>-]
-    >>[>+<<<<[->]>[<]>>-]
     <<<[[-]>>[>+<-]>>[<<<+>>>-]]
     >>[[<+>-]>>]<
     ]<<[>>+<<-]<<
     ]>>>>[.>>]
+
+    [This program sorts the bytes of its input by bubble sort.]
     """
-    vm.input("41")
+    vm.upload_code(src)
+    vm.input(inp)
+    vm.execute()
+    assert vm.stdout_as_str() == expected_out
+
+
+def test_squares(vm: bvm.BrainfuckVM):
+    src = """
+    ++[>+<-]>[<+++++>-]+<+[
+    >[>+>+<<-]++>>[<<+>>-]>>>[-]++>[-]+
+    >>>+[[-]++++++>>>]<<<[[<++++++++<++>>-]+<.<[>----<-]<]
+    <<[>>>>>[>>>[-]+++++++++<[>-<-]+++++++++>[-[<->-]+[<<<]]<[>+<-]>]<<-]<<-
+    ]
+    [Outputs square numbers from 0 to 10000.
+    Daniel B Cristofani (cristofdathevanetdotcom)
+    http://www.hevanet.com/cristofd/brainfuck/]
+    """
     vm.upload_code(src)
     vm.execute()
-    assert True
+    assert vm.stdout_as_str() == "\n".join(
+        ["0", "1", "4", "9", "16", "25", "36", "49", "64", "81", "100"]
+    ) + "\n"

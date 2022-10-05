@@ -2,6 +2,11 @@ import abc
 import queue
 
 import numpy as np
+import numpy.typing as npt
+
+
+DEFAULT_MEMORY_SIZE = 128
+DEFAULT_STACK_SIZE = 1000
 
 
 def is_memory_size_valid(memory_size: int) -> bool:
@@ -9,8 +14,18 @@ def is_memory_size_valid(memory_size: int) -> bool:
 
 
 class BrainfuckVM:
-    DEFAULT_MEMORY_SIZE = 128
-    DEFAULT_STACK_SIZE = 1000
+    __slots__ = (
+        "memory_size",
+        "memory",
+        "memory_ptr",
+        "code",
+        "code_ptr",
+        "executed",
+        "stack",
+        "stdin",
+        "stdout",
+        "_ops",
+    )
 
     def __init__(self, memory_size: int = DEFAULT_MEMORY_SIZE):
         if not is_memory_size_valid(memory_size):
@@ -21,7 +36,7 @@ class BrainfuckVM:
         self.code: str | None = None
         self.code_ptr = 0
         self.executed = 0
-        self.stack = queue.LifoQueue(maxsize=self.DEFAULT_STACK_SIZE)
+        self.stack = queue.LifoQueue(maxsize=DEFAULT_STACK_SIZE)
         self.stdin = queue.Queue()
         self.stdout = queue.Queue()
         self._ops = {}
@@ -32,6 +47,10 @@ class BrainfuckVM:
     @property
     def curr_memory(self) -> np.uint8:
         return self.memory[self.memory_ptr]
+
+    @property
+    def curr_memory_range(self) -> npt.NDArray[np.uint8]:
+        return self.memory[max(self.memory_ptr - 4, 0):min(self.memory_ptr + 5, self.memory_size)]
 
     @property
     def curr_op(self) -> str:
@@ -45,24 +64,6 @@ class BrainfuckVM:
         if not self.code:
             return ""
         return self.code[self.code_ptr - 4:self.code_ptr + 5]
-
-    @property
-    def prev_op(self) -> str:
-        """temp for debug"""
-        if not self.code:
-            return ""
-        return self.code[self.code_ptr - 1]
-
-    @property
-    def next_op(self) -> str:
-        """temp for debug"""
-        if not self.code:
-            return ""
-        return self.code[self.code_ptr + 1]
-
-    @property
-    def stack_top(self) -> np.uint8:
-        return self.stack.queue[-1]
 
     def minified_code(self, source: str) -> str:
         return "".join(s for s in source if s in self._ops.keys())
@@ -79,10 +80,16 @@ class BrainfuckVM:
         if not self.code:
             raise ValueError("No code loaded to BrainfuckVM")
         while self.code_ptr < len(self.code):
-            self._ops.get(self.code[self.code_ptr]).eval()
+            op: BrainfuckOp = self._ops.get(self.curr_op)
+            op.eval()
             self.code_ptr += 1
-            self.executed += 1
+            if op.countable:
+                self.executed += 1
             assert True
+
+    @property
+    def stack_view(self) -> str:
+        return str(self.stack.queue)
 
     def stdout_as_str(self) -> str:
         return "".join(self.stdout.queue)
@@ -93,8 +100,11 @@ class BrainfuckVM:
 
 
 class BrainfuckOp(abc.ABC):
-    def __init__(self, vm: BrainfuckVM):
+    def __init__(
+            self, vm: BrainfuckVM, countable: bool = True
+    ):
         self.vm = vm
+        self.countable = countable
 
     @abc.abstractmethod
     def eval(self) -> None:
@@ -160,6 +170,9 @@ class BrainfuckOpIn(BrainfuckOp):
 
 
 class BrainfuckOpLoopBegin(BrainfuckOp):
+    def __init__(self, vm: BrainfuckVM):
+        super().__init__(vm, countable=False)
+
     def go_to_closing_bracket(self) -> None:
         nesting_level = 1
         while nesting_level > 0:
@@ -169,27 +182,38 @@ class BrainfuckOpLoopBegin(BrainfuckOp):
                 case "]": nesting_level -= 1
 
     def eval(self) -> None:
-        # not sure this thing should be here
-        self.vm.executed -= 1
-
-        if self.vm.memory[self.vm.memory_ptr] != 0:
-            self.vm.stack.put(self.vm.code_ptr)
-        else:
-            if not self.vm.stack.empty():
-                self.vm.stack.get_nowait()
+        if self.vm.curr_memory == 0:
+            # if not self.vm._stack.empty():
+            #     self.vm._stack.get_nowait()
             self.go_to_closing_bracket()
+        else:
+            self.vm.stack.put_nowait(self.vm.code_ptr)
 
     def __repr__(self):
         return "["
 
 
 class BrainfuckOpLoopEnd(BrainfuckOp):
-    def eval(self) -> None:
-        # I don't want count it as it do all other interpreters
-        self.vm.executed -= 1
+    def __init__(self, vm: BrainfuckVM):
+        super().__init__(vm, countable=False)
 
-        if not self.vm.stack.empty():
-            self.vm.code_ptr = self.vm.stack_top - 1
+    def eval(self) -> None:
+        # need to move 1 less op, because we'll
+        #  move to loop begin at end of iter
+        begin_loop_ptr = self.vm.stack.get_nowait() - 1
+        if self.vm.curr_memory != 0:
+            self.vm.code_ptr = begin_loop_ptr
 
     def __repr__(self):
         return "]"
+
+
+class BrainfuckOpBreakpoint(BrainfuckOp):
+    def __init__(self, vm: BrainfuckVM):
+        super().__init__(vm, countable=False)
+
+    def eval(self) -> None:
+        assert True
+
+    def __repr__(self):
+        return "#"
