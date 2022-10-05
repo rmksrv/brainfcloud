@@ -77,7 +77,7 @@ def test_squares(vm: bvm.BrainfuckVM):
     >>>+[[-]++++++>>>]<<<[[<++++++++<++>>-]+<.<[>----<-]<]
     <<[>>>>>[>>>[-]+++++++++<[>-<-]+++++++++>[-[<->-]+[<<<]]<[>+<-]>]<<-]<<-
     ]
-    [Outputs square numbers from 0 to 10000.
+    [Outputs square numbers from 0 to 100.
     Daniel B Cristofani (cristofdathevanetdotcom)
     http://www.hevanet.com/cristofd/brainfuck/]
     """
