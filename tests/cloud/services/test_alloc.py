@@ -2,13 +2,12 @@ import datetime
 import json
 import pathlib
 
+import constants
 import pytest
+import utils
 
 import bvm
-import constants
 from cloud.services import alloc
-
-import utils
 
 
 def test_bvm_storage_path():
@@ -20,7 +19,9 @@ def test_bvm_storage_path():
 
 
 def test_store_bvm_hp(vm_hello_world_simple_executed: bvm.BrainfuckVM):
-    storage_file = utils.tmp_for_tests() / f"stored_vm_{datetime.datetime.now()}.json"
+    storage_file = (
+        utils.tmp_for_tests() / f"stored_vm_{datetime.datetime.now()}.json"
+    )
     storage_file.touch()
 
     alloc.store_bvm(vm_hello_world_simple_executed, storage_file)
@@ -36,7 +37,9 @@ def test_store_bvm_hp(vm_hello_world_simple_executed: bvm.BrainfuckVM):
 
 
 def test_store_bvm_file_not_found(clear_vm):
-    storage_file = utils.tmp_for_tests() / f"stored_vm_{datetime.datetime.now()}.json"
+    storage_file = (
+        utils.tmp_for_tests() / f"stored_vm_{datetime.datetime.now()}.json"
+    )
 
     try:
         alloc.store_bvm(clear_vm, storage_file)
@@ -46,7 +49,7 @@ def test_store_bvm_file_not_found(clear_vm):
 
 
 def test_load_vm_from_file_hp(
-    serialized_vm_hello_world_simple_executed: pathlib.Path
+    serialized_vm_hello_world_simple_executed: pathlib.Path,
 ):
     vm = alloc.load_vm_from_file(serialized_vm_hello_world_simple_executed)
     assert vm.memory_size == 128

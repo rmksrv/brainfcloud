@@ -1,6 +1,5 @@
-import pytest
-
 import constants
+import pytest
 
 
 @pytest.fixture

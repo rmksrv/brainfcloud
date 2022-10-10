@@ -1,11 +1,6 @@
 import fastapi
 
-from cloud import (
-    constants,
-    exceptions,
-    schemas,
-    services,
-)
+from cloud import constants, exceptions, schemas, services
 
 router = fastapi.APIRouter(prefix="/alloc", tags=["BVM Allocation"])
 
@@ -13,11 +8,13 @@ router = fastapi.APIRouter(prefix="/alloc", tags=["BVM Allocation"])
 @router.get(
     "/{bvm_instance_id}",
     response_model=schemas.BvmInstanceSchema,
-    responses={404: {"model": schemas.Message},}
+    responses={
+        404: {"model": schemas.Message},
+    },
 )
 def get_bvm_instance(
     bvm_instance_id: int,
-    alloc_service: services.alloc.AllocService = fastapi.Depends()
+    alloc_service: services.alloc.AllocService = fastapi.Depends(),
 ) -> schemas.BvmInstanceSchema | fastapi.responses.JSONResponse:
     """
     Get BvmInstance of bvm_instance_id
@@ -33,7 +30,9 @@ def get_bvm_instance(
 
     """
     try:
-        instance_record, vm = alloc_service.get_instance_and_vm(bvm_instance_id)
+        instance_record, vm = alloc_service.get_instance_and_vm(
+            bvm_instance_id
+        )
         return schemas.BvmInstanceSchema(
             id=instance_record.id,
             state=instance_record.state,
@@ -50,11 +49,13 @@ def get_bvm_instance(
 @router.post(
     "/new",
     response_model=schemas.BvmInstanceSchema,
-    responses={400: {"model": schemas.Message},}
+    responses={
+        400: {"model": schemas.Message},
+    },
 )
 def new_bvm_instance(
     memory_size: int = constants.BVM_DEFAULT_MEMORY_SIZE,
-    alloc_service: services.alloc.AllocService = fastapi.Depends()
+    alloc_service: services.alloc.AllocService = fastapi.Depends(),
 ) -> schemas.BvmInstanceSchema | fastapi.responses.JSONResponse:
     """
     Create a new vm with memory_size amount of memory
@@ -82,8 +83,17 @@ def new_bvm_instance(
         )
 
 
-@router.delete("/delete")
-def delete_bvm_instance(bvm_instance_id: int):
+@router.delete(
+    "/delete",
+    responses={
+        200: {"model": schemas.Message},
+        404: {"model": schemas.Message},
+    },
+)
+def delete_bvm_instance(
+    bvm_instance_id: int,
+    alloc_service: services.alloc.AllocService = fastapi.Depends(),
+) -> fastapi.responses.JSONResponse:
     """
     Delete VM
 
@@ -93,5 +103,16 @@ def delete_bvm_instance(bvm_instance_id: int):
 
     Returns
     -------
+    200 : if BvmInstance wa deleted successfully \n
+    404 : if no BvmInstance was found with such id
     """
-    pass
+    try:
+        alloc_service.delete_bvm_instance(bvm_instance_id)
+        return fastapi.responses.JSONResponse(
+            content=f"BvmInstance({bvm_instance_id}) was deleted"
+        )
+    except exceptions.NoSuchBvmInstance as e:
+        return fastapi.responses.JSONResponse(
+            status_code=404,
+            content=str(e),
+        )

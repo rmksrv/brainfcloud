@@ -6,13 +6,7 @@ import fastapi
 import sqlalchemy.orm
 
 import bvm
-from cloud import (
-    constants,
-    database,
-    exceptions,
-    schemas,
-    tables,
-)
+from cloud import constants, database, exceptions, schemas, tables
 
 
 def bvm_storage_path() -> pathlib.Path:
@@ -75,11 +69,15 @@ def load_vm_from_file(vm_file: pathlib.Path) -> bvm.BrainfuckVM:
 
 
 class AllocService:
-
-    def __init__(self, session: sqlalchemy.orm.Session = fastapi.Depends(database.session)):
+    def __init__(
+        self,
+        session: sqlalchemy.orm.Session = fastapi.Depends(database.session),
+    ):
         self.session = session
 
-    def get_instance_and_vm(self, bvm_instance_id: int) -> tuple[tables.BvmInstance, bvm.BrainfuckVM]:
+    def get_instance_and_vm(
+        self, bvm_instance_id: int
+    ) -> tuple[tables.BvmInstance, bvm.BrainfuckVM]:
         """
         Get from database bvm instance by bvm_instance_id.
         Load Bvm from storage.
@@ -98,20 +96,23 @@ class AllocService:
         Info and Bvm of BvmInstance, if exists
         """
         instance = (
-            self.session
-            .query(tables.BvmInstance)
+            self.session.query(tables.BvmInstance)
             .filter_by(id=bvm_instance_id)
             .first()
         )
         if not instance:
-            raise exceptions.NoSuchBvmInstance(f"No BvmInstance with id={bvm_instance_id}")
+            raise exceptions.NoSuchBvmInstance(
+                f"No BvmInstance with id={bvm_instance_id}"
+            )
 
         vm: bvm.BrainfuckVM | None = None
         if instance.state is not schemas.BvmState.NOT_EXISTS:
             vm = load_vm_from_file(pathlib.Path(instance.stored_at))
         return instance, vm
 
-    def new_bvm_instance(self, memory_size: int) -> tuple[tables.BvmInstance, bvm.BrainfuckVM]:
+    def new_bvm_instance(
+        self, memory_size: int
+    ) -> tuple[tables.BvmInstance, bvm.BrainfuckVM]:
         """
         Creates new BvmInstance
 
@@ -128,7 +129,9 @@ class AllocService:
         New BvmInstance with Bvm
         """
         if memory_size <= 0:
-            raise ValueError(f"BrainfuckVM cannot be initialized with memory_size={memory_size}")
+            raise ValueError(
+                f"BrainfuckVM cannot be initialized with memory_size={memory_size}"
+            )
 
         new_instance_storage = bvm_storage_path()
         new_instance = tables.BvmInstance(
@@ -142,3 +145,29 @@ class AllocService:
         self.session.add(new_instance)
         self.session.commit()
         return new_instance, vm
+
+    def delete_bvm_instance(self, bvm_instance_id: int):
+        """
+        Delete Bvm instance
+
+        Parameters
+        ----------
+        bvm_instance_id : ID of BvmInstance to delete
+
+        Raises
+        ------
+        cloud.exceptions.NoSuchBvmInstance :
+            if no record with bvm_instance_id found
+        """
+        instance = (
+            self.session.query(tables.BvmInstance)
+            .filter_by(id=bvm_instance_id)
+            .first()
+        )
+        if not instance:
+            raise exceptions.NoSuchBvmInstance(
+                f"No BvmInstance with id={bvm_instance_id}"
+            )
+
+        self.session.delete(instance)
+        self.session.commit()
