@@ -46,7 +46,7 @@ def store_bvm(vm: bvm.BrainfuckVM, dest: pathlib.Path) -> None:
     ValueError : if dest file not exists
     """
     if not dest.exists():
-        raise ValueError(f"File {dest} not exists")
+        raise FileNotFoundError(f"File {dest} not exists")
     with open(dest, "w") as f:
         f.write(schemas.BrainfuckVMSchema.from_vm(vm).json())
 
@@ -68,7 +68,7 @@ def load_vm_from_file(vm_file: pathlib.Path) -> bvm.BrainfuckVM:
     Loaded BrainfuckVM
     """
     if not vm_file.exists():
-        raise ValueError(f"File {vm_file} not exists")
+        raise FileNotFoundError(f"File {vm_file} not exists")
     with open(vm_file, "r") as f:
         json_vm = json.loads(f.read())
         return schemas.BrainfuckVMSchema(**json_vm).as_vm()

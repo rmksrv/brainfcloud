@@ -3,18 +3,18 @@ import pytest
 import bvm
 
 
-def test_hello_world_simple(vm: bvm.BrainfuckVM):
+def test_hello_world_simple(clear_vm):
     src = bvm.code_samples.hello_world_simple
-    vm.upload_code(src)
-    vm.execute()
-    assert vm.stdout_as_str() == "Hello World!\n"
+    clear_vm.upload_code(src)
+    clear_vm.execute()
+    assert clear_vm.stdout_as_str() == "Hello World!\n"
 
 
-def test_hello_world_optimized(vm: bvm.BrainfuckVM):
+def test_hello_world_optimized(clear_vm):
     src = bvm.code_samples.hello_world_optimized
-    vm.upload_code(src)
-    vm.execute()
-    assert vm.stdout_as_str() == "Hello World!\n"
+    clear_vm.upload_code(src)
+    clear_vm.execute()
+    assert clear_vm.stdout_as_str() == "Hello World!\n"
 
 
 @pytest.mark.parametrize(
@@ -26,15 +26,15 @@ def test_hello_world_optimized(vm: bvm.BrainfuckVM):
         ["3985", "3589"],
     ],
 )
-def test_bubble_sort(vm: bvm.BrainfuckVM, inp: str, expected_out: str):
+def test_bubble_sort(clear_vm, inp: str, expected_out: str):
     src = bvm.code_samples.bubble_sort
-    vm.upload_code(src)
-    vm.input(inp)
-    vm.execute()
-    assert vm.stdout_as_str() == expected_out
+    clear_vm.upload_code(src)
+    clear_vm.input(inp)
+    clear_vm.execute()
+    assert clear_vm.stdout_as_str() == expected_out
 
 
-def test_squares(vm: bvm.BrainfuckVM):
+def test_squares(clear_vm):
     expected_out = (
         "\n".join(
             ["0", "1", "4", "9", "16", "25", "36", "49", "64", "81", "100"]
@@ -42,6 +42,6 @@ def test_squares(vm: bvm.BrainfuckVM):
         + "\n"
     )
     src = bvm.code_samples.one_to_ten_squares
-    vm.upload_code(src)
-    vm.execute()
-    assert vm.stdout_as_str() == expected_out
+    clear_vm.upload_code(src)
+    clear_vm.execute()
+    assert clear_vm.stdout_as_str() == expected_out

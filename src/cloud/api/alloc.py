@@ -75,7 +75,7 @@ def new_bvm_instance(
             stored_at=instance.stored_at,
             bvm=schemas.BrainfuckVMSchema.from_vm(vm),
         )
-    except ValueError as e:
+    except FileNotFoundError as e:
         return fastapi.responses.JSONResponse(
             status_code=400,
             content={"message": str(e)},
